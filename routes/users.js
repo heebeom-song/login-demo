@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {body, validationResult} = require("express-validator");
-const { sign, signup } = require('../controller/UserController');
+const { signin, signup, passwordReset, passwordResetRequest, deleteUser } = require('../controller/UserController');
 const {StatusCodes} = require('http-status-codes');
 
 router.use(express.json());
@@ -18,13 +18,13 @@ const validate = (req, res, next) => {
 
 //로그인
 router.post(
-    '/sign', 
+    '/signin', 
     [
         body('username').notEmpty().isString().withMessage('이름 확인 필요'),
         body('password').notEmpty().isString().withMessage('비밀번호 확인 필요'),
         validate
     ],
-    sign
+    signin
 )
 
 //회원가입
@@ -38,5 +38,28 @@ router.post(
     ], 
     signup
 )
+
+router.route('/reset')
+.post(
+    [
+        body('username').notEmpty().isString().withMessage('이름 확인 필요'),
+        validate
+    ],
+    passwordResetRequest)
+.put(
+    [
+        body('username').notEmpty().isString().withMessage('이름 확인 필요'),
+        body('password').notEmpty().isString().withMessage('비밀번호 확인 필요'),
+        validate
+    ],
+    passwordReset)
+
+router.delete(
+    '/delete',
+    [
+        body('username').notEmpty().isString().withMessage('이름 확인 필요'),
+        validate
+    ],
+    deleteUser)
 
 module.exports = router

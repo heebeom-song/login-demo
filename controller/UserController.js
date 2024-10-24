@@ -37,7 +37,7 @@ const signup = (req, res) => {
     );
 };
 
-const sign = (req, res) => {
+const signin = (req, res) => {
     const {username, password} = req.body
 
     let sql = `SELECT * FROM users WHERE username = ?`
@@ -77,7 +77,78 @@ const sign = (req, res) => {
     )
 };
 
+const passwordResetRequest = (req, res)=>{
+    const {username} = req.body;
+
+    let sql = 'SELECT * FROM users WHERE username = ?';
+
+    conn.query(sql, username,
+        (err, results) => {
+            if(err){
+                console.log(err);
+                return res.status(StatusCodes.BAD_REQUEST).end();
+            }
+
+            const user = results[0];
+            if(user){
+                return res.status(StatusCodes.OK).json({
+                    userName : username
+                });
+            }else{
+                return res.status(StatusCodes.UNAUTHORIZED).end();
+            }
+        }
+    )
+};
+
+const passwordReset = (req, res)=>{
+    const {username, password} = req.body;
+
+    const salt = crypto.randomBytes(10).toString('base64');
+    const hashPassword = crypto.pbkdf2Sync(password, salt, 10000, 10, 'sha512').toString('base64');
+
+    let sql = 'UPDATE users SET password = ?, salt = ? WHERE username = ?';
+    let values = [hashPassword, salt, username];
+
+    conn.query(sql, values,
+        (err, results) => {
+            if(err){
+                console.log(err);
+                return res.status(StatusCodes.BAD_REQUEST).end();
+            }
+            if(results.affectedRows == 0)
+                return res.status(StatusCodes.BAD_REQUEST).end();
+            else
+                return res.status(StatusCodes.OK).json(results);
+        }
+    )
+
+};
+
+const deleteUser = (req, res)=>{
+    let {username} = req.body
+    
+    let sql = `DELETE FROM users WHERE username = ?`
+    conn.query(sql,username,
+        function (err, results) {
+            if(err){
+                console.log(err)
+                return res.status(400).end()
+            }
+
+            if(results.affectedRows == 0){
+                res.status(400).end()
+            }else{
+                res.status(200).json(results)
+            }
+        }
+    )
+}
+
 module.exports = {
     signup,
-    sign
+    signin,
+    passwordResetRequest,
+    passwordReset,
+    deleteUser
 };
